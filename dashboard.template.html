@@ -5,33 +5,111 @@
 <title>__TITEL__</title>
 
 <style>
+:root {
+    --gold: 255, 215, 0;
+    --gap: 12px;          /* Abstand zwischen den Karten */
+    --radius: 14px;
+}
+
 html, body {
     margin: 0;
     width: 100%;
     height: 100%;
 }
 
-/* BODY = Titel oben, Inhalt darunter */
+/* BODY = Kopfzeile oben, Inhalt darunter */
 body {
     display: flex;
     flex-direction: column;
     font-family: Arial, sans-serif;
-   background:
+    background:
         linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
         url("__HINTERGRUNDBILD__")
         no-repeat center center fixed;
     background-size: cover;
 }
 
-/* Hauptbereich mit 2 Spalten */
+/* ===== KOPFZEILE ===== */
+.header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 8px 24px;
+    background: rgba(0,0,0,0.55);
+    border-bottom: 2px solid rgba(var(--gold), 0.8);
+    position: relative;
+    z-index: 10;
+}
+
+.header .title {
+    grid-column: 2;
+    text-align: center;
+    font-size: 40px;
+    color: white;
+    text-shadow: 2px 2px 6px black;
+}
+
+.header .meta {
+    grid-column: 3;
+    justify-self: end;
+    text-align: right;
+    color: white;
+    text-shadow: 2px 2px 6px black;
+}
+
+.clock {
+    font-size: 54px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.updated {
+    margin-top: 4px;
+    font-size: 16px;
+    opacity: 0.8;
+    transition: color 0.5s ease;
+}
+
+.updated.warn {
+    color: #ff8a80;
+    opacity: 1;
+    font-weight: bold;
+}
+
+/* ===== VERBINDUNGSHINWEIS ===== */
+.warn-banner {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    transform: translate(-50%, 20px);
+    padding: 10px 26px;
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    background: rgba(183, 28, 28, 0.92);
+    border-radius: 999px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    z-index: 2000;
+}
+
+.warn-banner.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+/* ===== HAUPTBEREICH MIT 2 SPALTEN ===== */
 .container {
     flex: 1;
     display: flex;
     width: 100%;
-    height: 100%;
+    min-height: 0;
 }
 
-/* Spalten */
 .left {
     width: 55%;
     display: flex;
@@ -39,8 +117,6 @@ body {
     position: relative;
     overflow: hidden;
 }
-
-/* Spalten */
 
 .right {
     width: 45%;
@@ -50,55 +126,37 @@ body {
     overflow: hidden;
 }
 
+/* ===== KARTEN-LOOK (alle Widgets) ===== */
+.left iframe,
+.right iframe {
+    border: none;
+    box-sizing: border-box;
+    border-radius: var(--radius);
+    background: rgba(8, 18, 40, 0.55);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+}
 
-/* Rechte Seite */
+/* Rechte Seite: Karten liegen übereinander, Höhe füllt den Rest */
 .right iframe {
     position: absolute;
-    top: 40px;
-    left: 0;
-    width: 100%;
-    height: calc(100% - 40px);
-    border: none;
+    top: calc(40px + var(--gap));
+    left: var(--gap);
+    width: calc(100% - 2 * var(--gap));
+    height: calc(100% - 40px - 2 * var(--gap));
     display: none;
 }
 
-/* Höhe wird dynamisch per JS gesetzt */
-.left iframe.active {
-    display: block;
-}
-
-/* ===== LINKE SEITE (mehrere Iframes) ===== */
+/* Linke Seite: Höhe/Abstand/Einrückung werden per JS gesetzt */
 .left iframe {
-    width: 100%;
-    border: 0px solid #ccc;
-    box-sizing: border-box;
     display: none;
-        transition:
-        opacity 0.8s ease,
-        transform 0.8s ease;
+    margin: var(--gap) var(--gap) 0 0;
+    width: calc(100% - 45px - var(--gap));
 }
 
-.left iframe.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.left iframe.hide {
-    opacity: 0;
-    transform: translateY(10px);
-}
-
-/* Titel */
-.main-title {
-    text-align: center;
-    font-size: 40px;
-    color: white;
-    text-shadow: 2px 2px 6px black;
-    padding: 10px 0;
-    background: rgba(0,0,0,0.5);
-}
-
+/* ===== TITEL PRO SEITE (mit Fortschrittsbalken) ===== */
 .side-title {
+    position: relative;
+    z-index: 10;
     height: 40px;
     line-height: 40px;
     font-size: 35px;
@@ -108,48 +166,73 @@ body {
     background: rgba(0,0,0,0.5);
 }
 
-/* ===== OVERLAY ===== */
-.table-overlay {
+.progress {
     position: absolute;
     left: 0;
-    width: 100%;
-    background: rgba(0,0,0,0);
-    box-shadow: inset 0 0 0 3px rgba(255,215,0,0.9);
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    background: rgba(255,255,255,0.15);
+}
+
+.progress .bar {
+    height: 100%;
+    background: rgb(var(--gold));
+    box-shadow: 0 0 8px rgba(var(--gold), 0.8);
+    transform-origin: left;
+    transform: scaleX(0);
+}
+
+@keyframes fill {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+}
+
+/* ===== HERVORHEBUNG DER AKTUELLEN GRUPPE ===== */
+.table-overlay {
+    position: absolute;
+    left: 45px;
+    width: calc(100% - 45px - var(--gap));
+    border-radius: var(--radius);
+    box-shadow:
+        inset 0 0 0 4px rgba(var(--gold), 0.95),
+        inset 0 0 28px rgba(var(--gold), 0.35),
+        0 0 22px rgba(var(--gold), 0.6);
     pointer-events: none;
     z-index: 10;
-    display: none;
+    opacity: 0;
+    transition: top 0.6s ease, height 0.6s ease, opacity 0.5s ease;
 }
 
-.clock {
+.group-strip {
     position: absolute;
-    top: 12px;
-    right: 20px;
-    font-size: 68px;
-    color: white;
+    left: 0;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.7);
+    color: black;
+    font-size: 26px;
     font-weight: bold;
-    text-shadow: 2px 2px 6px black;
-    background: rgba(0,0,0,0.45);
-    padding: 6px 14px;
-    border-radius: 8px;
-    letter-spacing: 1px;
-    z-index: 1000;   /* WICHTIG */
+    letter-spacing: 2px;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
 }
-.table-overlay {
-    box-shadow: inset 6px 0 0 rgba(255,215,0,0.95);
-}
-
-.main-title,
-.side-title {
-    position: relative;
-    z-index: 10;
-}
-
-
 </style>
 </head>
 
 <body>
-<div id="clock" class="clock"></div>
+<div class="header">
+    <div class="title" id="title"></div>
+    <div class="meta">
+        <div id="clock" class="clock"></div>
+        <div id="updated" class="updated"></div>
+    </div>
+</div>
+
 <div class="container">
 
 <div class="left">
@@ -161,6 +244,9 @@ __RECHTE_IFRAMES__
 </div>
 
 </div>
+
+<div id="warnBanner" class="warn-banner">⚠ Keine aktuellen Daten – Verbindung prüfen</div>
+
 <script>
 /* Wird von erstelle-dashboard.sh aus turnier.json erzeugt */
 const CONFIG = __CONFIG__;
@@ -168,28 +254,47 @@ const CONFIG = __CONFIG__;
 const RIGHT_INTERVAL = CONFIG.rightInterval;   // Wechselintervall rechts
 const RELOAD_INTERVAL = CONFIG.reloadInterval; // Alle Iframes neu laden
 const FADE_DURATION = 800; // Dauer Fade in/out in ms
+const GAP = 12;            // muss zu --gap im CSS passen
+const STRIP_WIDTH = 45;    // Platz links für den Gruppenstreifen
+const DIM_OPACITY = 0.45;  // Abdunklung der nicht aktuellen Tabellen
+
+const leftEl = document.querySelector(".left");
+const rightEl = document.querySelector(".right");
 
 /* ===== TITEL ===== */
-const mainTitle = document.createElement("div");
-mainTitle.className = "main-title";
-mainTitle.innerText = CONFIG.titel;
-document.body.prepend(mainTitle);
+document.getElementById("title").textContent = CONFIG.titel;
 
-const leftTitle = document.createElement("div");
-leftTitle.className = "side-title";
-document.querySelector(".left").prepend(leftTitle);
+function createSideTitle(parent) {
+    const title = document.createElement("div");
+    title.className = "side-title";
+    const text = document.createElement("span");
+    const progress = document.createElement("div");
+    progress.className = "progress";
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    progress.appendChild(bar);
+    title.append(text, progress);
+    parent.prepend(title);
+    return { text, bar };
+}
 
-const rightTitle = document.createElement("div");
-rightTitle.className = "side-title";
-document.querySelector(".right").prepend(rightTitle);
+const leftTitle = createSideTitle(leftEl);
+const rightTitle = createSideTitle(rightEl);
 
 const leftTitles = CONFIG.leftTitles;
 const rightTitles = CONFIG.rightTitles;
 
+/* Fortschrittsbalken neu starten (läuft über ms Millisekunden) */
+function restartBar(bar, ms) {
+    bar.style.animation = "none";
+    void bar.offsetWidth; // Reflow, damit die Animation neu startet
+    bar.style.animation = `fill ${ms}ms linear forwards`;
+}
+
 /* ===== OVERLAY ===== */
 const overlay = document.createElement("div");
 overlay.className = "table-overlay";
-document.querySelector(".left").appendChild(overlay);
+leftEl.appendChild(overlay);
 
 /* ===== IFRAME SELECTION ===== */
 const leftIframes = document.querySelectorAll(".left iframe");
@@ -197,24 +302,31 @@ const rightIframes = document.querySelectorAll(".right iframe");
 
 let rightIndex = 0;
 let blockIndex = 0;
+let leftFading = false;
 
 const blocks = CONFIG.blocks;
 
-/* ===== OVERLAY-FUNKTION ===== */
+/* ===== HERVORHEBUNG: Rahmen um die aktuelle Gruppe, andere abdunkeln ===== */
 function updateOverlay() {
-    overlay.style.display = "none";
+    if (leftFading) return;
+
+    const visible = [...leftIframes].filter(i => i.style.display !== "none");
     const tableIndex = CONFIG.rightTableIndex[rightIndex];
+    const iframe = (tableIndex === null || tableIndex === undefined) ? null : leftIframes[tableIndex];
+    const active = iframe && iframe.style.display !== "none" ? iframe : null;
 
-    if (tableIndex === null || tableIndex === undefined) return;
-    const iframe = leftIframes[tableIndex];
-    if (!iframe || iframe.style.display === "none") return;
+    visible.forEach(i => { i.style.opacity = (!active || i === active) ? 1 : DIM_OPACITY; });
 
-    const iframeRect = iframe.getBoundingClientRect();
-    const leftRect = document.querySelector(".left").getBoundingClientRect();
+    if (!active) {
+        overlay.style.opacity = 0;
+        return;
+    }
 
+    const iframeRect = active.getBoundingClientRect();
+    const leftRect = leftEl.getBoundingClientRect();
     overlay.style.top = (iframeRect.top - leftRect.top) + "px";
     overlay.style.height = iframeRect.height + "px";
-    overlay.style.display = "block";
+    overlay.style.opacity = 1;
 }
 
 /* ===== RECHTS IFRAME WECHSEL ===== */
@@ -230,13 +342,15 @@ function showRightIframe(index) {
 /* START RECHTS */
 if (rightIframes.length > 0) {
     showRightIframe(0);
-    rightTitle.innerText = rightTitles[0];
+    rightTitle.text.textContent = rightTitles[0];
+    restartBar(rightTitle.bar, RIGHT_INTERVAL);
     updateOverlay();
 
     setInterval(() => {
         rightIndex = (rightIndex + 1) % rightIframes.length;
         showRightIframe(rightIndex);
-        rightTitle.innerText = rightTitles[rightIndex] || "Spielplan";
+        rightTitle.text.textContent = rightTitles[rightIndex] || "Spielplan";
+        restartBar(rightTitle.bar, RIGHT_INTERVAL);
         updateOverlay();
     }, RIGHT_INTERVAL);
 }
@@ -246,79 +360,120 @@ function showLeftBlock() {
     const block = blocks[blockIndex];
     const visibleIframes = [];
 
+    leftEl.querySelectorAll(".group-strip").forEach(s => s.remove());
     leftIframes.forEach(i => {
         i.style.display = "none";
         i.style.opacity = 0;
         i.style.pointerEvents = "none";
         i.style.transition = `opacity ${FADE_DURATION}ms ease-in-out`;
-        i.parentNode && i.parentNode.querySelector(".group-strip")?.remove();
     });
 
     for (let i = block.from; i <= block.to && i < leftIframes.length; i++) {
         visibleIframes.push(leftIframes[i]);
     }
 
-    const leftHeight = document.querySelector('.left').clientHeight - 40; // Überschrift
-    const iframeHeight = leftHeight / visibleIframes.length;
+    // Verfügbare Höhe: Spalte minus Überschrift, geteilt durch Anzahl Karten (inkl. Abstand)
+    const leftHeight = leftEl.clientHeight - 40;
+    const iframeHeight = leftHeight / visibleIframes.length - GAP;
 
     visibleIframes.forEach((i, idx) => {
         i.style.display = "block";
         i.style.height = iframeHeight + "px";
-        i.style.opacity = 1;
+        i.style.marginLeft = STRIP_WIDTH + "px"; // Platz für den Gruppenstreifen
         i.style.pointerEvents = "auto";
-
-        // Gruppenstreifen erstellen
-        const strip = document.createElement("div");
-        strip.className = "group-strip";
-        strip.style.position = "absolute";
-        strip.style.left = "0";
-        strip.style.top = i.offsetTop + "px";
-        strip.style.width = "40px";
-        strip.style.height = iframeHeight + "px";
-        strip.style.background = "rgba(255,255,255,0.6)";
-        strip.style.color = "black";
-        strip.style.fontWeight = "bold";
-        strip.style.display = "flex";
-        strip.style.alignItems = "center";
-        strip.style.justifyContent = "center";
-        strip.innerText = block.groups[idx] || "";
-        strip.style.fontSize = "26px";
-        strip.style.letterSpacing = "2px";
-        strip.style.textShadow = "1px 1px 3px rgba(0,0,0,0.5)";
-        document.querySelector(".left").appendChild(strip);
-
-        // Tabelle etwas nach rechts verschieben
-        i.style.marginLeft = "45px";
     });
 
-    leftTitle.innerText = leftTitles[blockIndex] || "Tabelle";
+    // Gruppenstreifen (nach dem Layout, damit offsetTop stimmt)
+    const strips = visibleIframes.map((i, idx) => {
+        const strip = document.createElement("div");
+        strip.className = "group-strip";
+        strip.style.top = i.offsetTop + "px";
+        strip.style.height = iframeHeight + "px";
+        strip.textContent = block.groups[idx] || "";
+        leftEl.appendChild(strip);
+        return strip;
+    });
+
+    leftTitle.text.textContent = leftTitles[blockIndex] || "Tabelle";
+    restartBar(leftTitle.bar, block.duration);
+
+    // Einblenden: erst Startzustand (opacity 0) rendern, dann Zielwerte setzen
+    leftFading = false;
+    void leftEl.offsetWidth;
+    strips.forEach(s => { s.style.opacity = 1; });
     updateOverlay();
 
+    // Ausblenden kurz vor Blockende, dann nächster Block
     setTimeout(() => {
-        blockIndex = (blockIndex + 1) % blocks.length;
-        showLeftBlock();
-    }, block.duration);
+        leftFading = true;
+        visibleIframes.forEach(i => { i.style.opacity = 0; });
+        strips.forEach(s => { s.style.opacity = 0; });
+        overlay.style.opacity = 0;
+        setTimeout(() => {
+            blockIndex = (blockIndex + 1) % blocks.length;
+            showLeftBlock();
+        }, FADE_DURATION);
+    }, Math.max(block.duration - FADE_DURATION, 0));
 }
 
 if (leftIframes.length > 0) showLeftBlock();
 
-/* ===== ALLE IFRAMES ALLE 60 SEKUNDEN NEU LADEN ===== */
+/* ===== ALLE IFRAMES REGELMÄSSIG NEU LADEN ===== */
 setInterval(() => {
     leftIframes.forEach(i => { i.src = i.src; });
     rightIframes.forEach(i => { i.src = i.src; });
 }, RELOAD_INTERVAL);
 
+/* ===== UHR ===== */
+function two(n) { return String(n).padStart(2, "0"); }
+
 function updateClock() {
     const now = new Date();
-    const h = String(now.getHours()).padStart(2, "0");
-    const m = String(now.getMinutes()).padStart(2, "0");
-    document.getElementById("clock").innerText = `${h}:${m}`;
+    document.getElementById("clock").textContent = `${two(now.getHours())}:${two(now.getMinutes())}`;
 }
 
 updateClock();
 setInterval(updateClock, 1000);
-</script>
 
+/* ===== LIVE-HINWEIS & VERBINDUNGSPROBLEM =====
+   Das Widget meldet nach jedem erfolgreichen Laden per postMessage seine Größe.
+   Daran erkennen wir, wann zuletzt Daten ankamen. */
+const WIDGET_ORIGIN = "https://www.meinturnierplan.de";
+const startTime = Date.now();
+let lastUpdate = null;
+
+window.addEventListener("message", ev => {
+    if (ev.origin !== WIDGET_ORIGIN) return;
+    if (!ev.data || typeof ev.data.type !== "string" || !ev.data.type.startsWith("iframeSize")) return;
+    lastUpdate = Date.now();
+    refreshStatus();
+});
+
+function refreshStatus() {
+    const updatedEl = document.getElementById("updated");
+    const banner = document.getElementById("warnBanner");
+    const now = Date.now();
+
+    const offline = navigator.onLine === false;
+    const neverLoaded = lastUpdate === null && now - startTime > 30000;
+    const stale = lastUpdate !== null && now - lastUpdate > RELOAD_INTERVAL * 1.5;
+    const problem = offline || neverLoaded || stale;
+
+    if (lastUpdate === null) {
+        updatedEl.textContent = problem ? "Keine Daten" : "Lade Daten …";
+    } else {
+        const d = new Date(lastUpdate);
+        updatedEl.textContent = `${problem ? "Stand" : "Aktualisiert"} ${two(d.getHours())}:${two(d.getMinutes())}`;
+    }
+    updatedEl.classList.toggle("warn", problem);
+    banner.classList.toggle("show", problem);
+}
+
+window.addEventListener("online", refreshStatus);
+window.addEventListener("offline", refreshStatus);
+refreshStatus();
+setInterval(refreshStatus, 5000);
+</script>
 
 </body>
 </html>
