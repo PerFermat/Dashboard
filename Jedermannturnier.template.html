@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Jedermannturnier</title>
+
+<style>
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* BODY = Titel oben, Inhalt darunter */
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: Arial, sans-serif;
+   background:
+        linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+        url("https://tt-hattenhofen.de/wp-content/uploads/2025/03/schlaeger.jpg")
+        no-repeat center center fixed;
+    background-size: cover;
+}
+
+/* Hauptbereich mit 2 Spalten */
+.container {
+    flex: 1;
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+/* Spalten */
+.left {
+    width: 55%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Spalten */
+
+.right {
+    width: 45%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+
+/* Rechte Seite */
+.right iframe {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 40px);
+    border: none;
+    display: none;
+}
+
+/* Höhe wird dynamisch per JS gesetzt */
+.left iframe.active {
+    display: block;
+}
+
+/* ===== LINKE SEITE (mehrere Iframes) ===== */
+.left iframe {
+    width: 100%;
+    border: 0px solid #ccc;
+    box-sizing: border-box;
+    display: none;
+        transition:
+        opacity 0.8s ease,
+        transform 0.8s ease;
+}
+
+.left iframe.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.left iframe.hide {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+/* Titel */
+.main-title {
+    text-align: center;
+    font-size: 40px;
+    color: white;
+    text-shadow: 2px 2px 6px black;
+    padding: 10px 0;
+    background: rgba(0,0,0,0.5);
+}
+
+.side-title {
+    height: 40px;
+    line-height: 40px;
+    font-size: 35px;
+    color: white;
+    text-shadow: 1px 1px 4px black;
+    padding-left: 10px;
+    background: rgba(0,0,0,0.5);
+}
+
+/* ===== OVERLAY ===== */
+.table-overlay {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    background: rgba(0,0,0,0);
+    box-shadow: inset 0 0 0 3px rgba(255,215,0,0.9);
+    pointer-events: none;
+    z-index: 10;
+    display: none;
+}
+
+.clock {
+    position: absolute;
+    top: 12px;
+    right: 20px;
+    font-size: 68px;
+    color: white;
+    font-weight: bold;
+    text-shadow: 2px 2px 6px black;
+    background: rgba(0,0,0,0.45);
+    padding: 6px 14px;
+    border-radius: 8px;
+    letter-spacing: 1px;
+    z-index: 1000;   /* WICHTIG */
+}
+.table-overlay {
+    box-shadow: inset 6px 0 0 rgba(255,215,0,0.95);
+}
+
+.main-title,
+.side-title {
+    position: relative;
+    z-index: 10;
+}
+
+
+</style>
+</head>
+
+<body>
+<div id="clock" class="clock"></div>
+<div class="container">
+
+<div class="left">
+    <!-- REPLACE_IFRAME_1 -->
+    <!-- REPLACE_IFRAME_3 -->
+    <!-- REPLACE_IFRAME_9 -->
+    <!-- REPLACE_IFRAME_13 -->
+    <!-- REPLACE_IFRAME_15 -->
+    <!-- REPLACE_IFRAME_17 -->
+</div>
+
+<div class="right">
+    <!-- REPLACE_IFRAME_2 -->
+    <!-- REPLACE_IFRAME_4 -->
+    <!-- REPLACE_IFRAME_8 -->
+    <!-- REPLACE_IFRAME_10 -->
+    <!-- REPLACE_IFRAME_12 -->
+    <!-- REPLACE_IFRAME_14 -->
+    <!-- REPLACE_IFRAME_16 -->
+    <!-- REPLACE_IFRAME_18 -->
+    <!-- REPLACE_IFRAME_22 -->
+</div>
+
+</div>
+<script>
+const RIGHT_INTERVAL = 20000;  // Wechselintervall rechts
+const RELOAD_INTERVAL = 180000; // Alle Iframes alle 60 Sekunden neu laden
+const FADE_DURATION = 800; // Dauer Fade in/out in ms
+
+/* ===== TITEL ===== */
+const mainTitle = document.createElement("div");
+mainTitle.className = "main-title";
+mainTitle.innerText = "TSGV Hattenhofen - Jedermannturnier";
+document.body.prepend(mainTitle);
+
+const leftTitle = document.createElement("div");
+leftTitle.className = "side-title";
+document.querySelector(".left").prepend(leftTitle);
+
+const rightTitle = document.createElement("div");
+rightTitle.className = "side-title";
+document.querySelector(".right").prepend(rightTitle);
+
+const leftTitles = ["Tabellen Mixed", "Tabelle Damen", "Tabellen Herren"];
+const rightTitles = [
+    "Spielplan Mixed – Gruppe A",
+    "Spielplan Mixed – Gruppe B",
+    "Finalspiele Mixed",
+    "Spielplan Damen – Gruppe A",
+    "Finalspiele Damen",
+    "Spielplan Herren – Gruppe A",
+    "Spielplan Herren – Gruppe B",
+    "Spielplan Herren – Gruppe C",
+    "Finalspiele Herren"
+];
+
+/* ===== OVERLAY ===== */
+const overlay = document.createElement("div");
+overlay.className = "table-overlay";
+document.querySelector(".left").appendChild(overlay);
+
+/* ===== IFRAME SELECTION ===== */
+const leftIframes = document.querySelectorAll(".left iframe");
+const rightIframes = document.querySelectorAll(".right iframe");
+
+let rightIndex = 0;
+let blockIndex = 0;
+
+const blocks = [
+    { from: 0, to: 1, duration: RIGHT_INTERVAL * 3, groups: ["A","B"] }, // Mixed Anzahl Gruppen + 1 für Finalespiele
+    { from: 2, to: 2, duration: RIGHT_INTERVAL * 2, groups: ["A"] },          // Damen
+    { from: 3, to: 5, duration: RIGHT_INTERVAL * 4, groups: ["A","B","C"] } // Herren
+];
+
+/* ===== OVERLAY-FUNKTION ===== */
+function updateOverlay() {
+    overlay.style.display = "none";
+    const title = rightTitles[rightIndex] || "";
+    let tableIndex = null;
+
+    if (title.includes("Mixed")) {
+        if (title.includes("Gruppe A")) tableIndex = 0;
+        if (title.includes("Gruppe B")) tableIndex = 1;
+    } else if (title.includes("Damen")) {
+        tableIndex = 2;
+    } else if (title.includes("Herren")) {
+        if (title.includes("Gruppe A")) tableIndex = 3;
+        if (title.includes("Gruppe B")) tableIndex = 4;
+        if (title.includes("Gruppe C")) tableIndex = 5;
+
+    }
+
+    if (tableIndex === null) return;
+    const iframe = leftIframes[tableIndex];
+    if (!iframe || iframe.style.display === "none") return;
+
+    const iframeRect = iframe.getBoundingClientRect();
+    const leftRect = document.querySelector(".left").getBoundingClientRect();
+
+    overlay.style.top = (iframeRect.top - leftRect.top) + "px";
+    overlay.style.height = iframeRect.height + "px";
+    overlay.style.display = "block";
+}
+
+/* ===== RECHTS IFRAME WECHSEL ===== */
+function showRightIframe(index) {
+    rightIframes.forEach((iframe, i) => {
+        iframe.style.display = "block";
+        iframe.style.opacity = (i === index) ? "1" : "0";
+        iframe.style.transition = "opacity 1s ease-in-out";
+        iframe.style.pointerEvents = (i === index) ? "auto" : "none";
+    });
+}
+
+/* START RECHTS */
+if (rightIframes.length > 0) {
+    showRightIframe(0);
+    rightTitle.innerText = rightTitles[0];
+    updateOverlay();
+
+    setInterval(() => {
+        rightIndex = (rightIndex + 1) % rightIframes.length;
+        showRightIframe(rightIndex);
+        rightTitle.innerText = rightTitles[rightIndex] || "Spielplan";
+        updateOverlay();
+    }, RIGHT_INTERVAL);
+}
+
+/* ===== LINKS BLOCKS MIT KORREKTER HÖHE UND GRUPPENSTREIFEN ===== */
+function showLeftBlock() {
+    const block = blocks[blockIndex];
+    const visibleIframes = [];
+
+    leftIframes.forEach(i => {
+        i.style.display = "none";
+        i.style.opacity = 0;
+        i.style.pointerEvents = "none";
+        i.style.transition = `opacity ${FADE_DURATION}ms ease-in-out`;
+        i.parentNode && i.parentNode.querySelector(".group-strip")?.remove();
+    });
+
+    for (let i = block.from; i <= block.to && i < leftIframes.length; i++) {
+        visibleIframes.push(leftIframes[i]);
+    }
+
+    const leftHeight = document.querySelector('.left').clientHeight - 40; // Überschrift
+    const iframeHeight = leftHeight / visibleIframes.length;
+
+    visibleIframes.forEach((i, idx) => {
+        i.style.display = "block";
+        i.style.height = iframeHeight + "px";
+        i.style.opacity = 1;
+        i.style.pointerEvents = "auto";
+
+        // Gruppenstreifen erstellen
+        const strip = document.createElement("div");
+        strip.className = "group-strip";
+        strip.style.position = "absolute";
+        strip.style.left = "0";
+        strip.style.top = i.offsetTop + "px";
+        strip.style.width = "40px";
+        strip.style.height = iframeHeight + "px";
+        strip.style.background = "rgba(255,255,255,0.6)";
+        strip.style.color = "black";
+        strip.style.fontWeight = "bold";
+        strip.style.display = "flex";
+        strip.style.alignItems = "center";
+        strip.style.justifyContent = "center";
+        strip.innerText = block.groups[idx] || "";
+        strip.style.fontSize = "26px";
+        strip.style.letterSpacing = "2px";
+        strip.style.textShadow = "1px 1px 3px rgba(0,0,0,0.5)";
+        document.querySelector(".left").appendChild(strip);
+
+        // Tabelle etwas nach rechts verschieben
+        i.style.marginLeft = "45px";
+    });
+
+    leftTitle.innerText = leftTitles[blockIndex] || "Tabelle";
+    updateOverlay();
+
+    setTimeout(() => {
+        blockIndex = (blockIndex + 1) % blocks.length;
+        showLeftBlock();
+    }, block.duration);
+}
+
+if (leftIframes.length > 0) showLeftBlock();
+
+/* ===== ALLE IFRAMES ALLE 60 SEKUNDEN NEU LADEN ===== */
+setInterval(() => {
+    leftIframes.forEach(i => { i.src = i.src; });
+    rightIframes.forEach(i => { i.src = i.src; });
+}, RELOAD_INTERVAL);
+
+function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, "0");
+    const m = String(now.getMinutes()).padStart(2, "0");
+    document.getElementById("clock").innerText = `${h}:${m}`;
+}
+
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+
+
+</body>
+</html>
