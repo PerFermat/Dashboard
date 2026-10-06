@@ -184,20 +184,21 @@ body {
     transform: translate(-50%, 0);
 }
 
-/* Fortschrittsbalken unter den Seitentiteln */
+/* Fortschrittsbalken am unteren Rand jeder Spalte (dezent: hellgrau auf grau) */
 .progress {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
     height: 4px;
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.12);
+    z-index: 20;
+    pointer-events: none;
 }
 
 .progress .bar {
     height: 100%;
-    background: rgb(255, 215, 0);
-    box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+    background: rgba(255,255,255,0.4);
     transform-origin: left;
     transform: scaleX(0);
 }
@@ -261,8 +262,9 @@ function createSideTitle(parent) {
     const bar = document.createElement("div");
     bar.className = "bar";
     progress.appendChild(bar);
-    title.append(text, progress);
+    title.append(text);
     parent.prepend(title);
+    parent.appendChild(progress);
     return { text, bar };
 }
 
