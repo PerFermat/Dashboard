@@ -5,80 +5,162 @@
 <title>__TITEL__</title>
 
 <style>
-:root {
-    --gold: 255, 215, 0;
-    --gap: 12px;          /* Abstand zwischen den Karten */
-    --radius: 14px;
-}
-
 html, body {
     margin: 0;
     width: 100%;
     height: 100%;
 }
 
-/* BODY = Kopfzeile oben, Inhalt darunter */
+/* BODY = Titel oben, Inhalt darunter */
 body {
     display: flex;
     flex-direction: column;
     font-family: Arial, sans-serif;
-    background:
+   background:
         linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
         url("__HINTERGRUNDBILD__")
         no-repeat center center fixed;
     background-size: cover;
 }
 
-/* ===== KOPFZEILE ===== */
-.header {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    padding: 8px 24px;
-    background: rgba(0,0,0,0.55);
-    border-bottom: 2px solid rgba(var(--gold), 0.8);
-    position: relative;
-    z-index: 10;
+/* Hauptbereich mit 2 Spalten */
+.container {
+    flex: 1;
+    display: flex;
+    width: 100%;
+    height: 100%;
 }
 
-.header .title {
-    grid-column: 2;
+/* Spalten */
+.left {
+    width: 55%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Spalten */
+
+.right {
+    width: 45%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+
+/* Rechte Seite */
+.right iframe {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 40px);
+    border: none;
+    display: none;
+}
+
+/* Höhe wird dynamisch per JS gesetzt */
+.left iframe.active {
+    display: block;
+}
+
+/* ===== LINKE SEITE (mehrere Iframes) ===== */
+.left iframe {
+    width: 100%;
+    border: 0px solid #ccc;
+    box-sizing: border-box;
+    display: none;
+        transition:
+        opacity 0.8s ease,
+        transform 0.8s ease;
+}
+
+.left iframe.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.left iframe.hide {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+/* Titel */
+.main-title {
     text-align: center;
     font-size: 40px;
     color: white;
     text-shadow: 2px 2px 6px black;
+    padding: 10px 0;
+    background: rgba(0,0,0,0.5);
 }
 
-.header .meta {
-    grid-column: 3;
-    justify-self: end;
-    text-align: right;
+.side-title {
+    height: 40px;
+    line-height: 40px;
+    font-size: 35px;
     color: white;
-    text-shadow: 2px 2px 6px black;
+    text-shadow: 1px 1px 4px black;
+    padding-left: 10px;
+    background: rgba(0,0,0,0.5);
+}
+
+/* ===== OVERLAY ===== */
+.table-overlay {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    background: rgba(0,0,0,0);
+    box-shadow: inset 0 0 0 3px rgba(255,215,0,0.9);
+    pointer-events: none;
+    z-index: 10;
+    display: none;
 }
 
 .clock {
-    font-size: 54px;
+    position: absolute;
+    top: 12px;
+    right: 20px;
+    font-size: 68px;
+    color: white;
     font-weight: bold;
+    text-shadow: 2px 2px 6px black;
+    background: rgba(0,0,0,0.45);
+    padding: 6px 14px;
+    border-radius: 8px;
     letter-spacing: 1px;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
+    z-index: 1000;   /* WICHTIG */
+}
+.table-overlay {
+    box-shadow: inset 6px 0 0 rgba(255,215,0,0.95);
 }
 
-.updated {
-    margin-top: 4px;
+.main-title,
+.side-title {
+    position: relative;
+    z-index: 10;
+}
+
+/* Live-Hinweis unter der Uhr */
+.clock small {
+    display: block;
     font-size: 16px;
-    opacity: 0.8;
-    transition: color 0.5s ease;
+    font-weight: normal;
+    letter-spacing: 0;
+    text-align: right;
+    opacity: 0.85;
 }
 
-.updated.warn {
+.clock small.warn {
     color: #ff8a80;
-    opacity: 1;
     font-weight: bold;
+    opacity: 1;
 }
 
-/* ===== VERBINDUNGSHINWEIS ===== */
+/* Hinweis bei Verbindungsproblem */
 .warn-banner {
     position: fixed;
     left: 50%;
@@ -102,71 +184,7 @@ body {
     transform: translate(-50%, 0);
 }
 
-/* ===== HAUPTBEREICH MIT 2 SPALTEN ===== */
-.container {
-    flex: 1;
-    display: flex;
-    width: 100%;
-    min-height: 0;
-}
-
-.left {
-    width: 55%;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-}
-
-.right {
-    width: 45%;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-}
-
-/* ===== WIDGETS ===== */
-.left iframe,
-.right iframe {
-    border: none;
-    box-sizing: border-box;
-    background: transparent;
-}
-
-/* Rechte Seite: Karten liegen übereinander, Höhe füllt den Rest */
-.right iframe {
-    position: absolute;
-    top: calc(40px + var(--gap));
-    left: var(--gap);
-    width: calc(100% - 2 * var(--gap));
-    height: calc(100% - 40px - 2 * var(--gap));
-    display: none;
-}
-
-/* Linke Seite: Höhe/Abstand/Einrückung werden per JS gesetzt */
-.left iframe {
-    display: block;          /* immer im Layout, damit das Widget seine Größe melden kann */
-    position: absolute;      /* Position und Skalierung werden per JS gesetzt */
-    transform-origin: 0 0;
-    opacity: 0;
-    pointer-events: none;
-}
-
-/* ===== TITEL PRO SEITE (mit Fortschrittsbalken) ===== */
-.side-title {
-    flex-shrink: 0;
-    position: relative;
-    z-index: 10;
-    height: 40px;
-    line-height: 40px;
-    font-size: 35px;
-    color: white;
-    text-shadow: 1px 1px 4px black;
-    padding-left: 10px;
-    background: rgba(0,0,0,0.5);
-}
-
+/* Fortschrittsbalken unter den Seitentiteln */
 .progress {
     position: absolute;
     left: 0;
@@ -178,8 +196,8 @@ body {
 
 .progress .bar {
     height: 100%;
-    background: rgb(var(--gold));
-    box-shadow: 0 0 8px rgba(var(--gold), 0.8);
+    background: rgb(255, 215, 0);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
     transform-origin: left;
     transform: scaleX(0);
 }
@@ -189,48 +207,12 @@ body {
     to   { transform: scaleX(1); }
 }
 
-/* ===== HERVORHEBUNG DER AKTUELLEN GRUPPE ===== */
-.table-overlay {
-    position: absolute;
-    left: 0;
-    width: 8px;
-    background: rgb(var(--gold));
-    box-shadow: 0 0 14px rgba(var(--gold), 0.8);
-    pointer-events: none;
-    z-index: 10;
-    opacity: 0;
-    transition: top 0.6s ease, height 0.6s ease, opacity 0.5s ease;
-}
 
-.group-strip {
-    position: absolute;
-    left: 0;
-    width: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255,255,255,0.7);
-    color: black;
-    font-size: 26px;
-    font-weight: bold;
-    letter-spacing: 2px;
-    border-radius: 0 var(--radius) var(--radius) 0;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-    opacity: 0;
-    transition: opacity 0.8s ease-in-out;
-}
 </style>
 </head>
 
 <body>
-<div class="header">
-    <div class="title" id="title"></div>
-    <div class="meta">
-        <div id="clock" class="clock"></div>
-        <div id="updated" class="updated"></div>
-    </div>
-</div>
-
+<div id="clock" class="clock"><span id="time"></span><small id="updated"></small></div>
 <div class="container">
 
 <div class="left">
@@ -242,9 +224,7 @@ __RECHTE_IFRAMES__
 </div>
 
 </div>
-
 <div id="warnBanner" class="warn-banner">⚠ Keine aktuellen Daten – Verbindung prüfen</div>
-
 <script>
 /* Wird von erstelle-dashboard.sh aus turnier.json erzeugt */
 const CONFIG = __CONFIG__;
@@ -252,15 +232,12 @@ const CONFIG = __CONFIG__;
 const RIGHT_INTERVAL = CONFIG.rightInterval;   // Wechselintervall rechts
 const RELOAD_INTERVAL = CONFIG.reloadInterval; // Alle Iframes neu laden
 const FADE_DURATION = 800; // Dauer Fade in/out in ms
-const GAP = 12;            // muss zu --gap im CSS passen
-const STRIP_WIDTH = 45;    // Platz links für den Gruppenstreifen
-const DIM_OPACITY = 0.45;  // Abdunklung der nicht aktuellen Tabellen
-
-const leftEl = document.querySelector(".left");
-const rightEl = document.querySelector(".right");
 
 /* ===== TITEL ===== */
-document.getElementById("title").textContent = CONFIG.titel;
+const mainTitle = document.createElement("div");
+mainTitle.className = "main-title";
+mainTitle.innerText = CONFIG.titel;
+document.body.prepend(mainTitle);
 
 function createSideTitle(parent) {
     const title = document.createElement("div");
@@ -276,11 +253,8 @@ function createSideTitle(parent) {
     return { text, bar };
 }
 
-const leftTitle = createSideTitle(leftEl);
-const rightTitle = createSideTitle(rightEl);
-
-const leftTitles = CONFIG.leftTitles;
-const rightTitles = CONFIG.rightTitles;
+const leftTitle = createSideTitle(document.querySelector(".left"));
+const rightTitle = createSideTitle(document.querySelector(".right"));
 
 /* Fortschrittsbalken neu starten (läuft über ms Millisekunden) */
 function restartBar(bar, ms) {
@@ -289,10 +263,13 @@ function restartBar(bar, ms) {
     bar.style.animation = `fill ${ms}ms linear forwards`;
 }
 
+const leftTitles = CONFIG.leftTitles;
+const rightTitles = CONFIG.rightTitles;
+
 /* ===== OVERLAY ===== */
 const overlay = document.createElement("div");
 overlay.className = "table-overlay";
-leftEl.appendChild(overlay);
+document.querySelector(".left").appendChild(overlay);
 
 /* ===== IFRAME SELECTION ===== */
 const leftIframes = document.querySelectorAll(".left iframe");
@@ -300,36 +277,34 @@ const rightIframes = document.querySelectorAll(".right iframe");
 
 let rightIndex = 0;
 let blockIndex = 0;
-let leftFading = false;
-let leftStrips = [];
-let currentVisible = [];  // Iframes des aktuellen Blocks (links)
-let currentBlock = null;
 
 const blocks = CONFIG.blocks;
 
-/* ===== HERVORHEBUNG: Streifen an der aktuellen Gruppe, andere abdunkeln ===== */
-function updateOverlay() {
-    if (leftFading) return;
+/* ===== OVERLAY-FUNKTION ===== */
+const DIM_OPACITY = 0.55; // Deckkraft der nicht aktuellen Tabellen
 
+function updateOverlay() {
+    overlay.style.display = "none";
     const tableIndex = CONFIG.rightTableIndex[rightIndex];
     const iframe = (tableIndex === null || tableIndex === undefined) ? null : leftIframes[tableIndex];
-    const active = iframe && currentVisible.includes(iframe) ? iframe : null;
+    const active = iframe && iframe.style.display !== "none" ? iframe : null;
 
-    currentVisible.forEach((i, idx) => {
+    // Nicht aktuelle Tabellen (und ihre Gruppenbalken) blasser darstellen
+    const strips = document.querySelectorAll(".group-strip");
+    [...leftIframes].filter(i => i.style.display !== "none").forEach((i, idx) => {
         const o = (!active || i === active) ? 1 : DIM_OPACITY;
         i.style.opacity = o;
-        if (leftStrips[idx]) leftStrips[idx].style.opacity = o;
+        if (strips[idx]) strips[idx].style.opacity = o;
     });
 
-    if (!active) {
-        overlay.style.opacity = 0;
-        return;
-    }
+    if (!active) return;
 
-    const idx = currentVisible.indexOf(active);
-    overlay.style.top = leftStrips[idx].style.top;
-    overlay.style.height = leftStrips[idx].style.height;
-    overlay.style.opacity = 1;
+    const iframeRect = active.getBoundingClientRect();
+    const leftRect = document.querySelector(".left").getBoundingClientRect();
+
+    overlay.style.top = (iframeRect.top - leftRect.top) + "px";
+    overlay.style.height = iframeRect.height + "px";
+    overlay.style.display = "block";
 }
 
 /* ===== RECHTS IFRAME WECHSEL ===== */
@@ -345,130 +320,94 @@ function showRightIframe(index) {
 /* START RECHTS */
 if (rightIframes.length > 0) {
     showRightIframe(0);
-    rightTitle.text.textContent = rightTitles[0];
+    rightTitle.text.innerText = rightTitles[0];
     restartBar(rightTitle.bar, RIGHT_INTERVAL);
     updateOverlay();
 
     setInterval(() => {
         rightIndex = (rightIndex + 1) % rightIframes.length;
         showRightIframe(rightIndex);
-        rightTitle.text.textContent = rightTitles[rightIndex] || "Spielplan";
+        rightTitle.text.innerText = rightTitles[rightIndex] || "Spielplan";
         restartBar(rightTitle.bar, RIGHT_INTERVAL);
         updateOverlay();
     }, RIGHT_INTERVAL);
 }
 
-/* ===== LINKS: TABELLEN FÜLLEN DEN BEREICH ===== */
-/* Die Widgets melden nach dem Laden ihre echte Inhaltsgröße (postMessage). Zum Messen bekommt
-   jedes Widget eine kleine Fläche; danach wird es auf Inhaltsgröße gesetzt und so skaliert,
-   dass die Tabellen des aktuellen Blocks die verfügbare Höhe (bzw. Breite) ausfüllen.
-   Fallback bei fehlender Meldung: width/height-Attribut aus turnier.json. */
-const MEASURE_W = 300, MEASURE_H = 50;
-const sizes = new Map();      // Iframe -> { w, h } Inhaltsgröße
-const measuring = new Set();  // Iframes, die gerade (neu) gemessen werden
-
-function startMeasure(i) {
-    measuring.add(i);
-    i.style.width = MEASURE_W + "px";
-    i.style.height = MEASURE_H + "px";
-    i.style.transform = "none";
-}
-
-leftIframes.forEach(i => {
-    sizes.set(i, { w: Number(i.getAttribute("width")), h: Number(i.getAttribute("height")) });
-    i.style.left = STRIP_WIDTH + "px";
-    i.style.top = "40px";
-    startMeasure(i);
-});
-
-function layoutLeft(fadeIn) {
-    leftEl.querySelectorAll(".group-strip").forEach(s => s.remove());
-    leftStrips = [];
-    if (!currentBlock) return;
-
-    const n = currentVisible.length;
-    const dims = currentVisible.map(i => sizes.get(i));
-    const sumH = dims.reduce((a, d) => a + d.h, 0);
-    const availH = leftEl.clientHeight - 40 - (n + 1) * GAP;
-    const availW = leftEl.clientWidth - STRIP_WIDTH - GAP;
-    const scale = Math.min(availH / sumH, availW / Math.max(...dims.map(d => d.w)));
-    const gap = (leftEl.clientHeight - 40 - scale * sumH) / (n + 1);
-
-    let y = 40 + gap;
-    currentVisible.forEach((i, idx) => {
-        const d = dims[idx];
-        i.style.width = d.w + "px";
-        i.style.height = d.h + "px";
-        i.style.top = y + "px";
-        i.style.transform = `scale(${scale})`;
-
-        // Gruppenstreifen: genau so hoch und an gleicher Position wie die skalierte Tabelle
-        const strip = document.createElement("div");
-        strip.className = "group-strip";
-        strip.style.top = y + "px";
-        strip.style.height = d.h * scale + "px";
-        strip.style.opacity = fadeIn ? 0 : 1;
-        strip.textContent = currentBlock.groups[idx] || "";
-        leftEl.appendChild(strip);
-        leftStrips.push(strip);
-
-        y += d.h * scale + gap;
-    });
-}
-
+/* ===== LINKS BLOCKS MIT KORREKTER HÖHE UND GRUPPENSTREIFEN ===== */
 function showLeftBlock() {
-    currentBlock = blocks[blockIndex];
-    currentVisible = [];
-    for (let i = currentBlock.from; i <= currentBlock.to && i < leftIframes.length; i++) {
-        currentVisible.push(leftIframes[i]);
-    }
+    const block = blocks[blockIndex];
+    const visibleIframes = [];
 
     leftIframes.forEach(i => {
+        i.style.display = "none";
         i.style.opacity = 0;
         i.style.pointerEvents = "none";
         i.style.transition = `opacity ${FADE_DURATION}ms ease-in-out`;
+        i.parentNode && i.parentNode.querySelector(".group-strip")?.remove();
     });
 
-    layoutLeft(true);
-    leftTitle.text.textContent = leftTitles[blockIndex] || "Tabelle";
-    restartBar(leftTitle.bar, currentBlock.duration);
+    for (let i = block.from; i <= block.to && i < leftIframes.length; i++) {
+        visibleIframes.push(leftIframes[i]);
+    }
 
-    // Einblenden: erst Startzustand (opacity 0) rendern, dann Zielwerte setzen
-    leftFading = false;
-    void leftEl.offsetWidth;
-    currentVisible.forEach(i => { i.style.opacity = 1; i.style.pointerEvents = "auto"; });
-    leftStrips.forEach(s => { s.style.opacity = 1; });
+    const leftHeight = document.querySelector('.left').clientHeight - 40; // Überschrift
+    const iframeHeight = leftHeight / visibleIframes.length;
+
+    visibleIframes.forEach((i, idx) => {
+        i.style.display = "block";
+        i.style.height = iframeHeight + "px";
+        i.style.opacity = 1;
+        i.style.pointerEvents = "auto";
+
+        // Gruppenstreifen erstellen
+        const strip = document.createElement("div");
+        strip.className = "group-strip";
+        strip.style.position = "absolute";
+        strip.style.left = "0";
+        strip.style.top = i.offsetTop + "px";
+        strip.style.width = "40px";
+        strip.style.height = iframeHeight + "px";
+        strip.style.background = "rgba(255,255,255,0.6)";
+        strip.style.color = "black";
+        strip.style.fontWeight = "bold";
+        strip.style.display = "flex";
+        strip.style.alignItems = "center";
+        strip.style.justifyContent = "center";
+        strip.innerText = block.groups[idx] || "";
+        strip.style.fontSize = "26px";
+        strip.style.borderRadius = "0 14px 14px 0";
+        strip.style.transition = "opacity 0.5s ease";
+        strip.style.letterSpacing = "2px";
+        strip.style.textShadow = "1px 1px 3px rgba(0,0,0,0.5)";
+        document.querySelector(".left").appendChild(strip);
+
+        // Tabelle etwas nach rechts verschieben
+        i.style.marginLeft = "45px";
+    });
+
+    leftTitle.text.innerText = leftTitles[blockIndex] || "Tabelle";
+    restartBar(leftTitle.bar, block.duration);
     updateOverlay();
 
-    // Ausblenden kurz vor Blockende, dann nächster Block
     setTimeout(() => {
-        leftFading = true;
-        currentVisible.forEach(i => { i.style.opacity = 0; });
-        leftStrips.forEach(s => { s.style.opacity = 0; });
-        overlay.style.opacity = 0;
-        setTimeout(() => {
-            blockIndex = (blockIndex + 1) % blocks.length;
-            showLeftBlock();
-        }, FADE_DURATION);
-    }, Math.max(currentBlock.duration - FADE_DURATION, 0));
+        blockIndex = (blockIndex + 1) % blocks.length;
+        showLeftBlock();
+    }, block.duration);
 }
 
 if (leftIframes.length > 0) showLeftBlock();
 
-window.addEventListener("resize", () => { layoutLeft(false); updateOverlay(); });
-
-/* ===== ALLE IFRAMES REGELMÄSSIG NEU LADEN (links vorher neu vermessen) ===== */
+/* ===== ALLE IFRAMES ALLE 60 SEKUNDEN NEU LADEN ===== */
 setInterval(() => {
-    leftIframes.forEach(i => { startMeasure(i); i.src = i.src; });
+    leftIframes.forEach(i => { i.src = i.src; });
     rightIframes.forEach(i => { i.src = i.src; });
 }, RELOAD_INTERVAL);
 
-/* ===== UHR ===== */
-function two(n) { return String(n).padStart(2, "0"); }
-
 function updateClock() {
     const now = new Date();
-    document.getElementById("clock").textContent = `${two(now.getHours())}:${two(now.getMinutes())}`;
+    const h = String(now.getHours()).padStart(2, "0");
+    const m = String(now.getMinutes()).padStart(2, "0");
+    document.getElementById("time").innerText = `${h}:${m}`;
 }
 
 updateClock();
@@ -486,13 +425,6 @@ window.addEventListener("message", ev => {
     if (!ev.data || typeof ev.data.type !== "string" || !ev.data.type.startsWith("iframeSize")) return;
     lastUpdate = Date.now();
     refreshStatus();
-
-    const i = [...leftIframes].find(f => f.contentWindow === ev.source);
-    if (i && measuring.has(i) && ev.data.width > 0 && ev.data.height > 0) {
-        measuring.delete(i);
-        sizes.set(i, { w: Math.ceil(ev.data.width), h: Math.ceil(ev.data.height) });
-        if (currentVisible.includes(i)) { layoutLeft(false); updateOverlay(); }
-    }
 });
 
 function refreshStatus() {
@@ -506,10 +438,12 @@ function refreshStatus() {
     const problem = offline || neverLoaded || stale;
 
     if (lastUpdate === null) {
-        updatedEl.textContent = problem ? "Keine Daten" : "Lade Daten …";
+        updatedEl.innerText = problem ? "Keine Daten" : "Lade Daten …";
     } else {
         const d = new Date(lastUpdate);
-        updatedEl.textContent = `${problem ? "Stand" : "Aktualisiert"} ${two(d.getHours())}:${two(d.getMinutes())}`;
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        updatedEl.innerText = `${problem ? "Stand" : "Aktualisiert"} ${hh}:${mm}`;
     }
     updatedEl.classList.toggle("warn", problem);
     banner.classList.toggle("show", problem);
@@ -520,6 +454,7 @@ window.addEventListener("offline", refreshStatus);
 refreshStatus();
 setInterval(refreshStatus, 5000);
 </script>
+
 
 </body>
 </html>
