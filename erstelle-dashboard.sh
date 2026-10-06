@@ -14,6 +14,8 @@ command -v perl >/dev/null || { echo "❌ perl fehlt"; exit 1; }
 # =================== FIXE WERTE (gelten für jedes Turnier) ===================
 HOST="https://www.meinturnierplan.de"
 FINALE_GR=90   # gr-Nummer der Finalrunde bei meinturnierplan.de
+IFRAME_BREITE=400  # Fallback-Größe der Iframes; die Seite passt sie selbst an den Platz an
+IFRAME_HOEHE=300
 STYLE_COMMON='s[size]=14&s[sizeheader]=14&s[color]=000000&s[maincolor]=173f75&s[padding]=2&s[innerpadding]=5&s[bgcolor]=00000000'
 STYLE_BORDER='s[bcolor]=bbbbbb&s[bsizeh]=1&s[bsizev]=1&s[bsizeoh]=1&s[bsizeov]=1&s[bbcolor]=bbbbbb&s[bbsize]=2&s[bgeven]=f0f8ffb0&s[bgodd]=ffffffb0&s[bgover]=eeeeffb0&s[bghead]=eeeeffff'
 TABLE_PARAMS="bm&sbr&${STYLE_COMMON}&s[logosize]=20&${STYLE_BORDER}&s[wrap]=false"
@@ -22,19 +24,19 @@ MATCH_PARAMS="&sbr&${STYLE_COMMON}&${STYLE_BORDER}&s[ehrsize]=10&s[ehrtop]=9&s[e
 
 OUTPUT_HTML=$(jq -r '.turnier.ausgabe' "$CONFIG_JSON")
 
-# Eine Zeile pro Iframe: <links|rechts> <tabelle|spiele> <id> <gr> <breite> <hoehe> <gruppenanzeige> <gruppenname|-> <kategorie>
+# Eine Zeile pro Iframe: <links|rechts> <tabelle|spiele> <id> <gr> <gruppenanzeige>
 # Reihenfolge = Anzeigereihenfolge. Links: Tabellen je Gruppe. Rechts: Spielplan je Gruppe, danach Finale.
 ROWS=$(jq -r --argjson fgr "$FINALE_GR" '
   def buchstabe: [64 + .] | implode;
   .kategorien[] as $k
   | ($k.gruppen | map(select(.aktiv != false))) as $g
-  | ( $g[] | ["links",  "tabelle", $k.id, .gr, .tabelle.breite, .tabelle.hoehe, $k.gruppenanzeige, (.name // (.gr|buchstabe)), $k.name] ),
-    ( $g[] | ["rechts", "spiele",  $k.id, .gr, .spiele.breite,  .spiele.hoehe,  $k.gruppenanzeige, (.name // (.gr|buchstabe)), $k.name] ),
-    ( if $k.finale then $k.finale | ["rechts", "spiele", $k.id, $fgr, .spiele.breite, .spiele.hoehe, $k.gruppenanzeige, "-", $k.name] else empty end )
+  | ( $g[] | ["links",  "tabelle", $k.id, .gr, $k.gruppenanzeige] ),
+    ( $g[] | ["rechts", "spiele",  $k.id, .gr, $k.gruppenanzeige] ),
+    ( if ($k.finale // false) then ["rechts", "spiele", $k.id, $fgr, $k.gruppenanzeige] else empty end )
   | @tsv' "$CONFIG_JSON")
 
-iframe() { # typ id gr breite hoehe gruppenanzeige
-  local typ=$1 id=$2 gr=$3 w=$4 h=$5 sg=$6 page params widget
+iframe() { # typ id gr gruppenanzeige
+  local typ=$1 id=$2 gr=$3 sg=$4 w=$IFRAME_BREITE h=$IFRAME_HOEHE page params widget
   if [ "$typ" = tabelle ]; then
     page=displayTable; widget=widgetTable; params="$TABLE_PARAMS"
   else
@@ -46,8 +48,8 @@ iframe() { # typ id gr breite hoehe gruppenanzeige
 }
 
 LEFT=""; RIGHT=""
-while IFS=$'\t' read -r seite typ id gr w h sg _ _; do
-  html="    $(iframe "$typ" "$id" "$gr" "$w" "$h" "$sg")"
+while IFS=$'\t' read -r seite typ id gr sg; do
+  html="    $(iframe "$typ" "$id" "$gr" "$sg")"
   if [ "$seite" = links ]; then LEFT+="$html"$'\n'; else RIGHT+="$html"$'\n'; fi
 done <<< "$ROWS"
 
@@ -56,7 +58,7 @@ JS_CONFIG=$(jq -c '
   def buchstabe: [64 + .] | implode;
   (.zeiten.wechsel_sekunden * 1000) as $ms
   | [ .kategorien[] | . as $k | ($k.gruppen | map(select(.aktiv != false))) as $g
-      | { name: $k.name, n: ($g | length), finale: ($k.finale != null),
+      | { name: $k.name, n: ($g | length), finale: ($k.finale // false),
           namen: ($g | map(.name // (.gr | buchstabe))) } ] as $kat
   | { titel: .turnier.titel,
       rightInterval: $ms,

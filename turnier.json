@@ -13,32 +13,32 @@
       "name": "Mixed",
       "id": 1736268055,
       "gruppenanzeige": true,
-      "finale": { "spiele": { "breite": 386, "hoehe": 551 } },
+      "finale": true,
       "gruppen": [
-        { "gr": 1, "tabelle": { "breite": 375, "hoehe": 189 }, "spiele": { "breite": 502, "hoehe": 414 } },
-        { "gr": 2, "tabelle": { "breite": 355, "hoehe": 189 }, "spiele": { "breite": 461, "hoehe": 414 } },
-        { "gr": 3, "aktiv": false, "tabelle": { "breite": 343, "hoehe": 164 }, "spiele": { "breite": 438, "hoehe": 289 } }
+        {"gr": 1},
+        {"gr": 2},
+        {"gr": 3, "aktiv": false}
       ]
     },
     {
       "name": "Damen",
       "id": 1736013713,
       "gruppenanzeige": false,
-      "finale": { "spiele": { "breite": 383, "hoehe": 295 } },
+      "finale": true,
       "gruppen": [
-        { "gr": 1, "tabelle": { "breite": 387, "hoehe": 239 }, "spiele": { "breite": 518, "hoehe": 739 } }
+        {"gr": 1}
       ]
     },
     {
       "name": "Herren",
       "id": 1736331850,
       "gruppenanzeige": true,
-      "finale": { "spiele": { "breite": 386, "hoehe": 551 } },
+      "finale": true,
       "gruppen": [
-        { "gr": 1, "tabelle": { "breite": 412, "hoehe": 189 }, "spiele": { "breite": 575, "hoehe": 414 } },
-        { "gr": 2, "tabelle": { "breite": 358, "hoehe": 189 }, "spiele": { "breite": 467, "hoehe": 414 } },
-        { "gr": 3, "tabelle": { "breite": 345, "hoehe": 164 }, "spiele": { "breite": 442, "hoehe": 289 } },
-        { "gr": 4, "aktiv": false, "tabelle": { "breite": 335, "hoehe": 164 }, "spiele": { "breite": 421, "hoehe": 289 } }
+        {"gr": 1},
+        {"gr": 2},
+        {"gr": 3},
+        {"gr": 4, "aktiv": false}
       ]
     }
   ]
