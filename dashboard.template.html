@@ -146,9 +146,11 @@ body {
 
 /* Linke Seite: Höhe/Abstand/Einrückung werden per JS gesetzt */
 .left iframe {
-    display: none;
-    flex-shrink: 0; /* Höhe = Inhaltshöhe, nicht schrumpfen lassen */
-    width: calc(100% - 45px - var(--gap));
+    display: block;          /* immer im Layout, damit das Widget seine Größe melden kann */
+    position: absolute;      /* Position und Skalierung werden per JS gesetzt */
+    transform-origin: 0 0;
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* ===== TITEL PRO SEITE (mit Fortschrittsbalken) ===== */
@@ -300,19 +302,20 @@ let rightIndex = 0;
 let blockIndex = 0;
 let leftFading = false;
 let leftStrips = [];
+let currentVisible = [];  // Iframes des aktuellen Blocks (links)
+let currentBlock = null;
 
 const blocks = CONFIG.blocks;
 
-/* ===== HERVORHEBUNG: Rahmen um die aktuelle Gruppe, andere abdunkeln ===== */
+/* ===== HERVORHEBUNG: Streifen an der aktuellen Gruppe, andere abdunkeln ===== */
 function updateOverlay() {
     if (leftFading) return;
 
-    const visible = [...leftIframes].filter(i => i.style.display !== "none");
     const tableIndex = CONFIG.rightTableIndex[rightIndex];
     const iframe = (tableIndex === null || tableIndex === undefined) ? null : leftIframes[tableIndex];
-    const active = iframe && iframe.style.display !== "none" ? iframe : null;
+    const active = iframe && currentVisible.includes(iframe) ? iframe : null;
 
-    visible.forEach((i, idx) => {
+    currentVisible.forEach((i, idx) => {
         const o = (!active || i === active) ? 1 : DIM_OPACITY;
         i.style.opacity = o;
         if (leftStrips[idx]) leftStrips[idx].style.opacity = o;
@@ -323,10 +326,9 @@ function updateOverlay() {
         return;
     }
 
-    const iframeRect = active.getBoundingClientRect();
-    const leftRect = leftEl.getBoundingClientRect();
-    overlay.style.top = (iframeRect.top - leftRect.top) + "px";
-    overlay.style.height = iframeRect.height + "px";
+    const idx = currentVisible.indexOf(active);
+    overlay.style.top = leftStrips[idx].style.top;
+    overlay.style.height = leftStrips[idx].style.height;
     overlay.style.opacity = 1;
 }
 
@@ -356,77 +358,108 @@ if (rightIframes.length > 0) {
     }, RIGHT_INTERVAL);
 }
 
-/* ===== LINKS BLOCKS MIT KORREKTER HÖHE UND GRUPPENSTREIFEN ===== */
-function showLeftBlock() {
-    const block = blocks[blockIndex];
-    const visibleIframes = [];
+/* ===== LINKS: TABELLEN FÜLLEN DEN BEREICH ===== */
+/* Die Widgets melden nach dem Laden ihre echte Inhaltsgröße (postMessage). Zum Messen bekommt
+   jedes Widget eine kleine Fläche; danach wird es auf Inhaltsgröße gesetzt und so skaliert,
+   dass die Tabellen des aktuellen Blocks die verfügbare Höhe (bzw. Breite) ausfüllen.
+   Fallback bei fehlender Meldung: width/height-Attribut aus turnier.json. */
+const MEASURE_W = 300, MEASURE_H = 50;
+const sizes = new Map();      // Iframe -> { w, h } Inhaltsgröße
+const measuring = new Set();  // Iframes, die gerade (neu) gemessen werden
 
+function startMeasure(i) {
+    measuring.add(i);
+    i.style.width = MEASURE_W + "px";
+    i.style.height = MEASURE_H + "px";
+    i.style.transform = "none";
+}
+
+leftIframes.forEach(i => {
+    sizes.set(i, { w: Number(i.getAttribute("width")), h: Number(i.getAttribute("height")) });
+    i.style.left = STRIP_WIDTH + "px";
+    i.style.top = "40px";
+    startMeasure(i);
+});
+
+function layoutLeft(fadeIn) {
     leftEl.querySelectorAll(".group-strip").forEach(s => s.remove());
+    leftStrips = [];
+    if (!currentBlock) return;
+
+    const n = currentVisible.length;
+    const dims = currentVisible.map(i => sizes.get(i));
+    const sumH = dims.reduce((a, d) => a + d.h, 0);
+    const availH = leftEl.clientHeight - 40 - (n + 1) * GAP;
+    const availW = leftEl.clientWidth - STRIP_WIDTH - GAP;
+    const scale = Math.min(availH / sumH, availW / Math.max(...dims.map(d => d.w)));
+    const gap = (leftEl.clientHeight - 40 - scale * sumH) / (n + 1);
+
+    let y = 40 + gap;
+    currentVisible.forEach((i, idx) => {
+        const d = dims[idx];
+        i.style.width = d.w + "px";
+        i.style.height = d.h + "px";
+        i.style.top = y + "px";
+        i.style.transform = `scale(${scale})`;
+
+        // Gruppenstreifen: genau so hoch und an gleicher Position wie die skalierte Tabelle
+        const strip = document.createElement("div");
+        strip.className = "group-strip";
+        strip.style.top = y + "px";
+        strip.style.height = d.h * scale + "px";
+        strip.style.opacity = fadeIn ? 0 : 1;
+        strip.textContent = currentBlock.groups[idx] || "";
+        leftEl.appendChild(strip);
+        leftStrips.push(strip);
+
+        y += d.h * scale + gap;
+    });
+}
+
+function showLeftBlock() {
+    currentBlock = blocks[blockIndex];
+    currentVisible = [];
+    for (let i = currentBlock.from; i <= currentBlock.to && i < leftIframes.length; i++) {
+        currentVisible.push(leftIframes[i]);
+    }
+
     leftIframes.forEach(i => {
-        i.style.display = "none";
         i.style.opacity = 0;
         i.style.pointerEvents = "none";
         i.style.transition = `opacity ${FADE_DURATION}ms ease-in-out`;
     });
 
-    for (let i = block.from; i <= block.to && i < leftIframes.length; i++) {
-        visibleIframes.push(leftIframes[i]);
-    }
-
-    // Jede Tabelle behält ihre Inhaltshöhe (height-Attribut aus turnier.json);
-    // der freie Platz wird gleichmäßig als Abstand verteilt.
-    const heights = visibleIframes.map(i => Number(i.getAttribute("height")));
-    const free = leftEl.clientHeight - 40 - heights.reduce((a, b) => a + b, 0);
-    const gap = Math.max(GAP, free / (visibleIframes.length + 1));
-
-    visibleIframes.forEach((i, idx) => {
-        i.style.display = "block";
-        i.style.height = heights[idx] + "px";
-        i.style.marginTop = gap + "px";
-        i.style.marginLeft = STRIP_WIDTH + "px"; // Platz für den Gruppenstreifen
-        i.style.pointerEvents = "auto";
-    });
-
-    // Gruppenstreifen (nach dem Layout, damit offsetTop stimmt): exakt so hoch wie die Tabelle
-    const strips = visibleIframes.map((i, idx) => {
-        const strip = document.createElement("div");
-        strip.className = "group-strip";
-        strip.style.top = i.offsetTop + "px";
-        strip.style.height = heights[idx] + "px";
-        strip.textContent = block.groups[idx] || "";
-        leftEl.appendChild(strip);
-        return strip;
-    });
-    leftStrips = strips;
-
+    layoutLeft(true);
     leftTitle.text.textContent = leftTitles[blockIndex] || "Tabelle";
-    restartBar(leftTitle.bar, block.duration);
+    restartBar(leftTitle.bar, currentBlock.duration);
 
     // Einblenden: erst Startzustand (opacity 0) rendern, dann Zielwerte setzen
     leftFading = false;
     void leftEl.offsetWidth;
-    strips.forEach(s => { s.style.opacity = 1; });
-    visibleIframes.forEach(i => { i.style.opacity = 1; });
+    currentVisible.forEach(i => { i.style.opacity = 1; i.style.pointerEvents = "auto"; });
+    leftStrips.forEach(s => { s.style.opacity = 1; });
     updateOverlay();
 
     // Ausblenden kurz vor Blockende, dann nächster Block
     setTimeout(() => {
         leftFading = true;
-        visibleIframes.forEach(i => { i.style.opacity = 0; });
-        strips.forEach(s => { s.style.opacity = 0; });
+        currentVisible.forEach(i => { i.style.opacity = 0; });
+        leftStrips.forEach(s => { s.style.opacity = 0; });
         overlay.style.opacity = 0;
         setTimeout(() => {
             blockIndex = (blockIndex + 1) % blocks.length;
             showLeftBlock();
         }, FADE_DURATION);
-    }, Math.max(block.duration - FADE_DURATION, 0));
+    }, Math.max(currentBlock.duration - FADE_DURATION, 0));
 }
 
 if (leftIframes.length > 0) showLeftBlock();
 
-/* ===== ALLE IFRAMES REGELMÄSSIG NEU LADEN ===== */
+window.addEventListener("resize", () => { layoutLeft(false); updateOverlay(); });
+
+/* ===== ALLE IFRAMES REGELMÄSSIG NEU LADEN (links vorher neu vermessen) ===== */
 setInterval(() => {
-    leftIframes.forEach(i => { i.src = i.src; });
+    leftIframes.forEach(i => { startMeasure(i); i.src = i.src; });
     rightIframes.forEach(i => { i.src = i.src; });
 }, RELOAD_INTERVAL);
 
@@ -453,6 +486,13 @@ window.addEventListener("message", ev => {
     if (!ev.data || typeof ev.data.type !== "string" || !ev.data.type.startsWith("iframeSize")) return;
     lastUpdate = Date.now();
     refreshStatus();
+
+    const i = [...leftIframes].find(f => f.contentWindow === ev.source);
+    if (i && measuring.has(i) && ev.data.width > 0 && ev.data.height > 0) {
+        measuring.delete(i);
+        sizes.set(i, { w: Math.ceil(ev.data.width), h: Math.ceil(ev.data.height) });
+        if (currentVisible.includes(i)) { layoutLeft(false); updateOverlay(); }
+    }
 });
 
 function refreshStatus() {
