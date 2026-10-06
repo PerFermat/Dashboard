@@ -24,18 +24,18 @@ MATCH_PARAMS="&sbr&${STYLE_COMMON}&${STYLE_BORDER}&s[ehrsize]=10&s[ehrtop]=9&s[e
 
 OUTPUT_HTML=$(jq -r '.turnier.ausgabe' "$CONFIG_JSON")
 
-# Eine Zeile pro Iframe: <links|rechts> <tabelle|spiele> <id> <gr> <gruppenanzeige>
+# Eine Zeile pro Iframe: <links|rechts> <tabelle|spiele> <id> <gr> <true wenn Kategorie mehrere Gruppen hat>
 # Reihenfolge = Anzeigereihenfolge. Links: Tabellen je Gruppe. Rechts: Spielplan je Gruppe, danach Finale.
 ROWS=$(jq -r --argjson fgr "$FINALE_GR" '
   def buchstabe: [64 + .] | implode;
   .kategorien[] as $k
   | $k.gruppen as $g
-  | ( $g[] | ["links",  "tabelle", $k.id, .gr, $k.gruppenanzeige] ),
-    ( $g[] | ["rechts", "spiele",  $k.id, .gr, $k.gruppenanzeige] ),
-    ( if ($k.finale // false) then ["rechts", "spiele", $k.id, $fgr, $k.gruppenanzeige] else empty end )
+  | ( $g[] | ["links",  "tabelle", $k.id, .gr, ($g | length > 1)] ),
+    ( $g[] | ["rechts", "spiele",  $k.id, .gr, ($g | length > 1)] ),
+    ( if ($k.finale // false) then ["rechts", "spiele", $k.id, $fgr, ($g | length > 1)] else empty end )
   | @tsv' "$CONFIG_JSON")
 
-iframe() { # typ id gr gruppenanzeige
+iframe() { # typ id gr mehrere_gruppen (true/false -> &sg im Spielplan)
   local typ=$1 id=$2 gr=$3 sg=$4 w=$IFRAME_BREITE h=$IFRAME_HOEHE page params widget
   if [ "$typ" = tabelle ]; then
     page=displayTable; widget=widgetTable; params="$TABLE_PARAMS"
