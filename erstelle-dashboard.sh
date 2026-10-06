@@ -29,7 +29,7 @@ OUTPUT_HTML=$(jq -r '.turnier.ausgabe' "$CONFIG_JSON")
 ROWS=$(jq -r --argjson fgr "$FINALE_GR" '
   def buchstabe: [64 + .] | implode;
   .kategorien[] as $k
-  | ($k.gruppen | map(select(.aktiv != false))) as $g
+  | $k.gruppen as $g
   | ( $g[] | ["links",  "tabelle", $k.id, .gr, $k.gruppenanzeige] ),
     ( $g[] | ["rechts", "spiele",  $k.id, .gr, $k.gruppenanzeige] ),
     ( if ($k.finale // false) then ["rechts", "spiele", $k.id, $fgr, $k.gruppenanzeige] else empty end )
@@ -57,7 +57,7 @@ done <<< "$ROWS"
 JS_CONFIG=$(jq -c '
   def buchstabe: [64 + .] | implode;
   (.zeiten.wechsel_sekunden * 1000) as $ms
-  | [ .kategorien[] | . as $k | ($k.gruppen | map(select(.aktiv != false))) as $g
+  | [ .kategorien[] | . as $k | $k.gruppen as $g
       | { name: $k.name, n: ($g | length), finale: ($k.finale // false),
           namen: ($g | map(.name // (.gr | buchstabe))) } ] as $kat
   | { titel: .turnier.titel,

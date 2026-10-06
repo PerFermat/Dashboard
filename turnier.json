@@ -16,8 +16,7 @@
       "finale": true,
       "gruppen": [
         {"gr": 1},
-        {"gr": 2},
-        {"gr": 3, "aktiv": false}
+        {"gr": 2}
       ]
     },
     {
@@ -37,8 +36,7 @@
       "gruppen": [
         {"gr": 1},
         {"gr": 2},
-        {"gr": 3},
-        {"gr": 4, "aktiv": false}
+        {"gr": 3}
       ]
     }
   ]
