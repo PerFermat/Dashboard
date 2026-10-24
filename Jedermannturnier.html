@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<meta name="build" content="20261024194006">
 <title>TSGV Hattenhofen - Jedermannturnier</title>
 
 <style>
@@ -211,10 +212,34 @@ body {
 }
 
 
+
+/* Marke "VORLÄUFIG" (Steuerung über status.json) */
+.vorlaeufig {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    padding: 4px 18px;
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #1a1a1a;
+    background: #ffb300;
+    border: 2px solid #1a1a1a;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    transform: rotate(-8deg);
+    z-index: 1000;
+    display: none;
+}
+
+.vorlaeufig.show {
+    display: block;
+}
 </style>
 </head>
 
 <body>
+<div id="vorlaeufig" class="vorlaeufig">VORLÄUFIG</div>
 <div id="clock" class="clock"><span id="time"></span><small id="updated"></small></div>
 <div class="container">
 
@@ -465,6 +490,38 @@ function refreshStatus() {
     updatedEl.classList.toggle("warn", problem);
     banner.classList.toggle("show", problem);
 }
+
+/* ===== VORLÄUFIG-HINWEIS (status.json) =====
+   Wird jede Minute neu abgefragt. Bei Fehlern (offline, file://) bleibt der letzte Zustand. */
+const STATUS_INTERVAL = 60000;
+
+async function loadStatus() {
+    try {
+        const res = await fetch("status.json?t=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) return;
+        const status = await res.json();
+        document.getElementById("vorlaeufig").classList.toggle("show", status.vorlaeufig === true);
+    } catch (e) { /* letzten Zustand beibehalten */ }
+}
+
+loadStatus();
+setInterval(loadStatus, STATUS_INTERVAL);
+
+/* ===== AUTO-RELOAD bei neuer Version =====
+   Vergleicht die Build-ID dieser Seite mit der veröffentlichten Version. */
+const RELOAD_CHECK_INTERVAL = 300000;
+const BUILD_ID = document.querySelector('meta[name="build"]')?.content;
+
+async function checkNewVersion() {
+    try {
+        const res = await fetch(location.pathname + "?t=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) return;
+        const match = (await res.text()).match(/<meta name="build" content="([^"]*)"/);
+        if (match && BUILD_ID && match[1] !== BUILD_ID) location.reload();
+    } catch (e) { /* offline: später erneut versuchen */ }
+}
+
+setInterval(checkNewVersion, RELOAD_CHECK_INTERVAL);
 
 window.addEventListener("online", refreshStatus);
 window.addEventListener("offline", refreshStatus);

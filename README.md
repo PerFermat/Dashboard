@@ -15,6 +15,7 @@ die Tabellen und Spielpläne von [meinturnierplan.de](https://www.meinturnierpla
 | `turnier.json` | Die Konfiguration. **Nur diese Datei musst du für ein neues Turnier anpassen.** |
 | `erstelle-dashboard.sh` | Erzeugt die HTML-Datei aus `turnier.json` und dem Template. |
 | `dashboard.template.html` | Layout, Stil und Ablauf der Seite (Platzhalter für Iframes und Konfiguration). |
+| `status.json` | Schaltet den Hinweis "VORLÄUFIG" ein/aus. Wird von den Bildschirmen jede Minute abgefragt. |
 | `Jedermannturnier.html` | Die erzeugte Seite (Ausgabe, wird bei jedem Lauf überschrieben). |
 
 ## Benutzung
@@ -77,6 +78,23 @@ du einfach ein, weniger löschst du.
 - Dauer der Tabellen-Blöcke: Anzahl der Spielplan-Seiten der Kategorie (Gruppen plus Finale) mal `wechsel_sekunden`.
 - Die Gruppe im Spielplan wird angezeigt, wenn die Kategorie mehrere Gruppen hat.
 - Die Größe der Tabellen und Spielpläne passt sich dem Bildschirm an, es gibt keine Breiten- oder Höhenangaben.
+
+## Ablauf mit Vorläufig-Modus
+
+Die Bildschirme (z. B. Raspberry Pi mit Chromium im Kiosk-Modus) rufen die Seite per URL von GitHub Pages auf:
+`https://perfermat.github.io/Dashboard/Jedermannturnier.html`. Sie holen sich alles Weitere selbst.
+
+1. **Vor dem Einlass:** In `status.json` steht `{ "vorlaeufig": true }`. Oben links erscheint die orange Marke "VORLÄUFIG".
+2. **Änderungen laufend einpflegen:**
+   - Daten in meinturnierplan.de erscheinen sofort in den Widgets.
+   - Strukturelle Änderungen (Gruppen, Namen, Zeiten): `turnier.json` anpassen, `./erstelle-dashboard.sh` ausführen,
+     die erzeugte HTML-Datei committen und pushen. GitHub Pages braucht dafür 1–2 Minuten.
+   - Die Bildschirme prüfen alle 5 Minuten, ob eine neue Version veröffentlicht wurde, und laden sich dann selbst neu.
+3. **Turnierstart:** In `status.json` `"vorlaeufig": false` setzen. Das geht direkt im GitHub-Webeditor
+   (auch am Handy), ohne Skript. Die Marke verschwindet auf den Bildschirmen innerhalb von etwa 1–3 Minuten
+   (Pages-Verzögerung plus Abfrage jede Minute).
+
+Ist `status.json` nicht erreichbar (kurzer Netzausfall), behält die Seite den letzten bekannten Zustand.
 
 ## Fixe Werte im Skript
 

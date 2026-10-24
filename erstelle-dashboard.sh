@@ -79,12 +79,14 @@ JS_CONFIG=$(jq -c '
 
 export LEFT RIGHT JS_CONFIG
 export TITEL; TITEL=$(jq -r '.turnier.titel' "$CONFIG_JSON")
+export BUILD; BUILD=$(date +%Y%m%d%H%M%S)
 export BG;    BG=$(jq -r '.turnier.hintergrundbild' "$CONFIG_JSON")
 
 perl -0777 -pe '
   s/__LINKE_IFRAMES__\n/$ENV{LEFT}/;
   s/__RECHTE_IFRAMES__\n/$ENV{RIGHT}/;
   s/__CONFIG__/$ENV{JS_CONFIG}/;
+  s/__BUILD__/$ENV{BUILD}/;
   s/__TITEL__/$ENV{TITEL}/;
   s/__HINTERGRUNDBILD__/$ENV{BG}/;
 ' "$TEMPLATE" > "$OUTPUT_HTML"
