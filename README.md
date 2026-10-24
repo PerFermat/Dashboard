@@ -84,14 +84,14 @@ du einfach ein, weniger löschst du.
 Die Bildschirme (z. B. Raspberry Pi mit Chromium im Kiosk-Modus) rufen die Seite per URL von GitHub Pages auf:
 `https://perfermat.github.io/Dashboard/Jedermannturnier.html`. Sie holen sich alles Weitere selbst.
 
-1. **Vor dem Einlass:** In `status.json` steht `{ "vorlaeufig": true }`. Oben links erscheint die orange Marke "VORLÄUFIG".
+1. **Vor dem Einlass:** In `status.json` steht `{ "vorlaeufig": true }`. Quer über den ganzen Bildschirm erscheint ein durchsichtiges Wasserzeichen "VORLÄUFIG".
 2. **Änderungen laufend einpflegen:**
    - Daten in meinturnierplan.de erscheinen sofort in den Widgets.
    - Strukturelle Änderungen (Gruppen, Namen, Zeiten): `turnier.json` anpassen, `./erstelle-dashboard.sh` ausführen,
      die erzeugte HTML-Datei committen und pushen. GitHub Pages braucht dafür 1–2 Minuten.
    - Die Bildschirme prüfen alle 5 Minuten, ob eine neue Version veröffentlicht wurde, und laden sich dann selbst neu.
 3. **Turnierstart:** In `status.json` `"vorlaeufig": false` setzen. Das geht direkt im GitHub-Webeditor
-   (auch am Handy), ohne Skript. Die Marke verschwindet auf den Bildschirmen innerhalb von etwa 1–3 Minuten
+   (auch am Handy), ohne Skript. Das Wasserzeichen verschwindet auf den Bildschirmen innerhalb von etwa 1–3 Minuten
    (Pages-Verzögerung plus Abfrage jede Minute).
 
 Ist `status.json` nicht erreichbar (kurzer Netzausfall), behält die Seite den letzten bekannten Zustand.

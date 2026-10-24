@@ -213,33 +213,36 @@ body {
 
 
 
-/* Marke "VORLÄUFIG" (Steuerung über status.json) */
+/* Wasserzeichen "VORLÄUFIG" über dem ganzen Bildschirm (Steuerung über status.json) */
 .vorlaeufig {
-    position: absolute;
-    top: 14px;
-    left: 18px;
-    padding: 4px 18px;
-    font-size: 24px;
-    font-weight: bold;
-    letter-spacing: 2px;
-    color: #1a1a1a;
-    background: #ffb300;
-    border: 2px solid #1a1a1a;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    transform: rotate(-8deg);
-    z-index: 1000;
+    position: fixed;
+    inset: 0;
     display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 900;
+}
+
+.vorlaeufig span {
+    font-size: 14vw;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    color: rgba(255, 170, 0, 0.22);
+    -webkit-text-stroke: 2px rgba(255, 210, 120, 0.35);
+    text-shadow: 0 0 12px rgba(0, 0, 0, 0.25);
+    transform: rotate(-20deg);
 }
 
 .vorlaeufig.show {
-    display: block;
+    display: flex;
 }
 </style>
 </head>
 
 <body>
-<div id="vorlaeufig" class="vorlaeufig">VORLÄUFIG</div>
+<div id="vorlaeufig" class="vorlaeufig"><span>VORLÄUFIG</span></div>
 <div id="clock" class="clock"><span id="time"></span><small id="updated"></small></div>
 <div class="container">
 
